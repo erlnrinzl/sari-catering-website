@@ -1,0 +1,291 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  customerID      String        @id @unique @db.Char(6)
+  customerName    String        @db.VarChar(100)
+  customerGender  PersonGender
+  customerDOB     DateTime?     @db.Date
+  customerEmail   String?       @db.VarChar(20)
+  customerPhone   String        @db.VarChar(20)
+  customerAddress String        @db.VarChar(300)
+  customerType    CustomerType
+  createdAt       DateTime      @default(now())
+  Order           Order[]
+  Corporate       Corporate?
+  HomeCatering    HomeCatering?
+}
+
+model Corporate {
+  customerID      String    @id @unique @db.Char(6)
+  taxNumber       String    @db.Char(16)
+  contractNumber  String
+  contractDate    DateTime  @db.Date
+  contractEndDate DateTime? @db.Date
+  active          Boolean   @default(true) @db.TinyInt
+  createdAt       DateTime  @default(now())
+  customer        Customer  @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+}
+
+model HomeCatering {
+  customerID         String           @id @unique @db.Char(6)
+  subscriptionNumber String
+  subscriptionStatus Boolean          @default(true) @db.TinyInt
+  PresetSchedule     PresetSchedule[]
+  createdAt          DateTime         @default(now())
+  customer           Customer         @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+}
+
+model PresetSchedule {
+  presetID     String       @id @db.Char(6)
+  deliveryDay  DeliveryDay
+  customerID   String       @db.Char(6)
+  homeCatering HomeCatering @relation(fields: [customerID], references: [customerID], onDelete: Cascade)
+}
+
+model Staff {
+  staffID          String             @id @unique @db.Char(6)
+  staffName        String             @db.VarChar(100)
+  staffGender      PersonGender
+  staffDOB         DateTime?          @db.Date
+  staffEmail       String             @db.VarChar(20)
+  staffPhone       String             @db.VarChar(20)
+  staffAddress     String?            @db.VarChar(300)
+  hireDate         DateTime           @db.Date
+  endDate          DateTime?          @db.Date
+  active           Boolean            @default(true) @db.TinyInt
+  staffPosition    StaffPosition
+  createdAt        DateTime           @default(now())
+  Order            Order[]
+  DeliverySchedule DeliverySchedule[]
+  DeliveryStaff    DeliveryStaff?
+  Admin            Admin?
+  Manager          Manager?
+}
+
+model Manager {
+  staffID       String @id @unique @db.Char(6)
+  salesApproval BigInt
+  staff         Staff  @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
+}
+
+model Admin {
+  staffID     String @id @unique @db.Char(6)
+  salesRecord BigInt
+  staff       Staff  @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
+}
+
+model DeliveryStaff {
+  staffID       String @id @unique @db.Char(6)
+  vehicleNumber String @db.VarChar(7)
+  staff         Staff  @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
+}
+
+model Order {
+  orderID             String            @id @unique @db.Char(17)
+  orderDate           DateTime          @default(now()) @db.Date
+  deliveryDateRequest DateTime          @db.DateTime()
+  totalAmount         BigInt
+  orderStatus         OrderStatus
+  paymentStatus       PaymentStatus
+  customerID          String?           @db.Char(6)
+  staffID             String?           @db.Char(6)
+  customer            Customer?         @relation(fields: [customerID], references: [customerID], onDelete: SetNull)
+  staff               Staff?            @relation(fields: [staffID], references: [staffID], onDelete: SetNull)
+  DeliverySchedule    DeliverySchedule?
+  Billing             Billing[]
+}
+
+model Billing {
+  billingID     String        @id @unique @db.Char(5)
+  billingDate   DateTime      @default(now()) @db.Date
+  billingStatus BillingStatus
+  billingType   BillingType
+  orderID       String        @db.Char(17)
+  order         Order         @relation(fields: [orderID], references: [orderID], onDelete: Cascade)
+  Payment       Payment?
+}
+
+model Payment {
+  paymentID   String     @id @unique @db.Char(5)
+  paymentDate DateTime   @default(now()) @db.Date
+  paymentType PaymenType
+  billingID   String     @unique @db.Char(5)
+  billing     Billing    @relation(fields: [billingID], references: [billingID], onDelete: Cascade)
+}
+
+model DeliverySchedule {
+  deliveryID         String         @id @unique @db.Char(14)
+  deliveryAddress    String         @db.VarChar(300)
+  actualDeliveryDate DateTime       @db.Date
+  deliveryStatus     DeliveryStatus
+  orderID            String         @unique @db.Char(17)
+  deliveryStaffID    String?        @db.Char(6)
+  createdAt          DateTime       @default(now())
+  order              Order          @relation(fields: [orderID], references: [orderID], onDelete: Cascade)
+  staff              Staff?         @relation(fields: [deliveryStaffID], references: [staffID], onDelete: SetNull)
+}
+
+model OrderDetail {
+  orderID  String @db.Char(17)
+  menuID   String @db.Char(5)
+  quantity Int
+
+  @@id([orderID, menuID])
+}
+
+model Menu {
+  menuID         String        @id @unique @db.Char(5)
+  menuName       String        @db.VarChar(100)
+  menuDesc       String        @db.VarChar(500)
+  menuPrice      BigInt
+  menuType       MenuType
+  menuCategoryID String?       @db.Char(5)
+  menuCategory   MenuCategory? @relation(fields: [menuCategoryID], references: [menuCategoryID], onDelete: SetNull)
+  createdAt      DateTime      @default(now())
+}
+
+model MenuCategory {
+  menuCategoryID String   @id @unique @db.Char(5)
+  categoryName   String   @db.VarChar(50)
+  createdAt      DateTime @default(now())
+  Menu           Menu[]
+}
+
+model Recipe {
+  menuID       String @db.Char(5)
+  materialID   String @db.Char(5)
+  quantityUsed Int
+
+  @@id([menuID, materialID])
+}
+
+model Material {
+  materialID         String            @id @unique @db.Char(5)
+  materialName       String            @db.VarChar(100)
+  unit               String            @db.VarChar(50)
+  stockQuantity      Int
+  minimunStock       Int
+  materialCategoryID String?           @db.Char(5)
+  materialCategory   MaterialCategory? @relation(fields: [materialCategoryID], references: [materialCategoryID], onDelete: SetNull)
+  createdAt          DateTime          @default(now())
+}
+
+model MaterialCategory {
+  materialCategoryID   String     @id @unique @db.Char(5)
+  materialCategoryName String     @db.VarChar(100)
+  Material             Material[]
+  createdAt            DateTime   @default(now())
+}
+
+model Supplier {
+  supplierID      String   @id @unique @db.Char(5)
+  supplierName    String   @db.VarChar(100)
+  supplierPhone   String   @db.VarChar(20)
+  supplierEmail   String?  @db.VarChar(20)
+  supplierAddress String   @db.VarChar(300)
+  supplierWebsite String?  @db.VarChar(50)
+  createdAt       DateTime @default(now())
+}
+
+model MaterialSupplier {
+  materialID            String   @db.Char(5)
+  supplierID            String   @db.Char(5)
+  closestExpirationDate DateTime @db.Date
+  newestSupplyDate      DateTime @db.Date
+
+  @@id([materialID, supplierID])
+}
+
+enum PersonGender {
+  Male
+  Female
+}
+
+enum CustomerType {
+  Personal
+  HomeCatering
+  Corporate
+}
+
+enum DeliveryDay {
+  Sunday
+  Monday
+  Tuesday
+  Wednesday
+  Thursday
+  Friday
+  Saturday
+}
+
+enum StaffPosition {
+  Staff
+  Manager
+  DeliveryStaff
+  Admin
+}
+
+enum OrderStatus {
+  PENDING
+  CANCELLED
+  PROCESSED
+  COMPLETED
+}
+
+enum PaymentStatus {
+  UNPAID
+  DP
+  PAID
+}
+
+enum DeliveryStatus {
+  SCHEDULED
+  DELIVERED
+  POSTPONED
+}
+
+enum MenuType {
+  FOOD
+  DRINK
+}
+
+enum BillingStatus {
+  PAID
+  UNPAID
+}
+
+enum BillingType {
+  DP
+  TERMIN_1
+  TERMIN_2
+  FINAL_PAYMENT
+  FULL
+}
+
+enum PaymenType {
+  CASH
+  TRANSFER
+}
+
+enum UnitOfMetrics {
+  Gr
+  Kg
+  Pcs
+  mL
+  L
+  Cloves
+  Tbsp
+  Tsp
+}
