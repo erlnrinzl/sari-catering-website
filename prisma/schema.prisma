@@ -14,7 +14,7 @@ datasource db {
 }
 
 model Customer {
-  customerID      String        @id @unique @db.Char(6)
+  customerID      String        @id @default(uuid())
   customerName    String        @db.VarChar(100)
   customerGender  PersonGender
   customerDOB     DateTime?     @db.Date
@@ -29,10 +29,11 @@ model Customer {
 }
 
 model Corporate {
-  customerID      String    @id @unique @db.Char(6)
-  taxNumber       String    @db.Char(16)
+  id              String    @id @default(uuid())
+  customerID      String    @unique
+  taxNumber       String    @default("0000000000000000") @db.Char(16)
   contractNumber  String
-  contractDate    DateTime  @db.Date
+  contractDate    DateTime  @default(now()) @db.Date
   contractEndDate DateTime? @db.Date
   active          Boolean   @default(true) @db.TinyInt
   createdAt       DateTime  @default(now())
@@ -40,7 +41,8 @@ model Corporate {
 }
 
 model HomeCatering {
-  customerID         String           @id @unique @db.Char(6)
+  id                 String           @id @default(uuid())
+  customerID         String           @unique
   subscriptionNumber String
   subscriptionStatus Boolean          @default(true) @db.TinyInt
   PresetSchedule     PresetSchedule[]
@@ -56,7 +58,7 @@ model PresetSchedule {
 }
 
 model Staff {
-  staffID          String             @id @unique @db.Char(6)
+  staffID          String             @id @default(uuid())
   staffName        String             @db.VarChar(100)
   staffGender      PersonGender
   staffDOB         DateTime?          @db.Date
@@ -76,7 +78,7 @@ model Staff {
 }
 
 model Manager {
-  staffID       String @id @unique @db.Char(6)
+  staffID       String @id @default(uuid())
   salesApproval BigInt
   staff         Staff  @relation(fields: [staffID], references: [staffID], onDelete: Cascade)
 }
