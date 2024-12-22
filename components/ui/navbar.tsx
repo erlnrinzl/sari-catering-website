@@ -45,10 +45,7 @@ export function Navbar() {
                 </span>
               </div>
               <Avatar>
-                <AvatarImage
-                  src="https://github.com/shadcn.png"
-                  alt="profile photo"
-                />
+                <AvatarImage src="./images/profile.jpg" alt="profile photo" />
                 <AvatarFallback>profile photo</AvatarFallback>
               </Avatar>
             </div>

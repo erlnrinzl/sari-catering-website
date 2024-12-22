@@ -7,6 +7,7 @@ import {
   LuCitrus,
   LuUtensils,
   LuWarehouse,
+  LuBadgeDollarSign,
 } from "react-icons/lu";
 
 import {
@@ -22,6 +23,7 @@ import {
 } from "./sidebar";
 import Link from "next/link";
 import Image from "next/image";
+import { Separator } from "./separator";
 
 // Menu items.
 const items = [
@@ -34,6 +36,11 @@ const items = [
     title: "Order",
     url: "/order",
     icon: LuConciergeBell,
+  },
+  {
+    title: "Billing",
+    url: "/billing",
+    icon: LuBadgeDollarSign,
   },
   {
     title: "Schedule",
@@ -102,6 +109,8 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        <Separator />
 
         <SidebarGroup>
           <SidebarGroupLabel>Resources</SidebarGroupLabel>
